@@ -13,7 +13,7 @@ def call(String place, Map parameters = [:]) {
             logUtils.dockerLogin(parameters.registryCred, parameters.registry)      
             break
         case "ocp":
-            logUtils.ocpLogin(parameters.registryCred, parameters.urlTarget)
+            logUtils.ocpLogin(parameters.registryCred, parameters.urlTarget, parameters.ocpNamespace)
             break
     }
 }

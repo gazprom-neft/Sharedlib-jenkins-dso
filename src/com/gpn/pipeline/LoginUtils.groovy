@@ -12,13 +12,14 @@ class LoginUtils {
         @param ocpCredId ID of cred for login into OKD/OCP cluster
         @param ocpUrlTarget Path of desired cluster
     */
-    public void ocpLogin(String ocpCredId, String ocpUrlTarget) {
+    public void ocpLogin(String ocpCredId, String ocpUrlTarget, String ocpProject) {
         script.withCredentials([script.string(
             credentialsId: ocpCredId,
             variable: 'TOKEN'
         )]) {
             script.sh """
                 oc login $ocpUrlTarget --token $script.TOKEN
+                oc project $ocpProject
             """
         }
     }
