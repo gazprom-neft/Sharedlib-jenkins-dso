@@ -85,7 +85,7 @@ class SastFunction {
         for (def repo_name in userInput.keySet()){
             if (userInput[repo_name] != dont_scan_string){
                 selected_repos.add(repo_name)
-                script.dir(repo_name) {
+                script.dir(repo_name.replaceAll("\\s", "_")) {
                     script.checkout scm: [$class: 'GitSCM', userRemoteConfigs: [[url: getGitFullPath(repo_name, USER, git_project_id, git_ssh_proto, git_ssh_port, git_base_url, git_collection_path, git_repo_url_prefix),
                     credentialsId: git_cred_id ]], branches: [[name: userInput[repo_name]]]], poll: false
                 }
@@ -105,7 +105,7 @@ class SastFunction {
             echo 'ssh -i ${key} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \$*' > ${user}.ssh
             chmod +x ${user}.ssh
 
-            GIT_SSH='./${user}.ssh' git ls-remote --quiet --tags --heads ${getGitFullPath(repo_name, user, git_project_id, git_ssh_proto, git_ssh_port, git_base_url, git_collection_path, git_repo_url_prefix)} | \
+            GIT_SSH='./${user}.ssh' git ls-remote --quiet --tags --heads "${getGitFullPath(repo_name, user, git_project_id, git_ssh_proto, git_ssh_port, git_base_url, git_collection_path, git_repo_url_prefix)}" | \
             awk '{print \$2}' | \
             grep -vi '{}' | \
             cut -d/ -f1,2 --complement > ${repo_name.replaceAll("\\s", "_")}.txt
@@ -122,9 +122,10 @@ class SastFunction {
     }
 
     // Cretate zip archive with all interesting data and send it to SAST server for scan proccess
-    public def doSastScan(project_id, sast_proto, sast_base_url, sast_port, sast_generate_pdf_report, sast_password, sast_filter_pattern, sast_project_policy_enforce, sast_hide_debug, sast_cac, sast_incremental) {
+    public def doSastScan(project_id, sast_proto, sast_base_url, sast_port, sast_generate_pdf_report, sast_password,
+        sast_filter_pattern, sast_project_policy_enforce, sast_hide_debug, sast_cac, sast_incremental, sast_group_id) {
         script.step([$class: 'CxScanBuilder', comment: '', configAsCode: sast_cac, credentialsId: '', excludeFolders: '', exclusionsSetting: 'global', failBuildOnNewResults: false, failBuildOnNewSeverity: 'HIGH',
-        filterPattern: sast_filter_pattern, fullScanCycle: 10, generatePdfReport: sast_generate_pdf_report, groupId: '3', password: sast_password, preset: '36', enableProjectPolicyEnforcement: sast_project_policy_enforce,
+        filterPattern: sast_filter_pattern, fullScanCycle: 10, generatePdfReport: sast_generate_pdf_report, groupId: sast_group_id, password: sast_password, preset: '36', enableProjectPolicyEnforcement: sast_project_policy_enforce,
         projectName: "${project_id}", sastEnabled: true, serverUrl: "${sast_proto}://${sast_base_url}:${sast_port}", sourceEncoding: '1', hideDebugLogs: sast_hide_debug, incremental: sast_incremental,
         username: '', vulnerabilityThresholdResult: 'FAILURE', waitForResultsEnabled: true])
     }
