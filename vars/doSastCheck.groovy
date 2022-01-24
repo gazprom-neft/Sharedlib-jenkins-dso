@@ -19,7 +19,8 @@ import com.gpn.pipeline.SastFunction
 @Field sast_port = "${env.SL_SAST_SERVER_PORT}" //SAST server tcp port. Example: "8443"
 @Field sast_generate_pdf_report = true // Allows SAST to return pdf report to jenkins build (Default "true")
 @Field sast_password = "${env.SL_SAST_PASS_CRED_ID}" // Jenkins credential id with SAST encrypted password (string)
-@Field sast_project_policy_enforce = false // Enforce SAST policy to return error in jenkins build (Default "false") 
+@Field sast_project_policy_enforce = false // Enforce SAST policy to return error in jenkins build (Default "false")
+@Field sast_server_cred_id = "${env.SL_SAST_SERVER_CRED_ID}" // SAST credential id with username/password to access REST API (get token)
 @Field sast_filter_pattern = '''!**/_cvs/**/*, !**/.svn/**/*, !**/.hg/**/*, !**/.git/**/*, !**/.bzr/**/*,
         !**/.gitgnore/**/*, !**/.gradle/**/*, !**/.checkstyle/**/*, !**/.classpath/**/*, !**/bin/**/*,
         !**/obj/**/*, !**/backup/**/*, !**/.idea/**/*, !**/*.DS_Store, !**/*.ipr, !**/*.iws,
@@ -63,81 +64,29 @@ def call(String func, Map parameters = [:]) {
     if(parameters.set_build_name == null) {
         parameters.set_build_name = false // Define default to false if not exists
     }
+    if(parameters.sast_group_id == null) {
+        parameters.sast_group_id = "1" // Define default to 1 (following DSOPROJECT-2137) if not exists
+    }
+    if(parameters.sast_generate_reports == null) {
+        parameters.sast_generate_reports = false // Define default to false
+    }
+    if(parameters.sast_generate_reports_email_list == null) {
+        parameters.sast_generate_reports_email_list = "" // Define default to empty string
+    }
 
     switch(func) {
         /*
         Allows to start SAST scan check with fully automated process with predefined list
         of git repository names and branches/tags for your ADS project.
 
-        Available parameters to call function "manualWithParameters":
-         - repos_for_scan:
-            !Required!
-            Provides list of repos/branches/tags for SAST security scanning.
-            Must be Map (Dictionary) with "repo": "branch/tag" syntax. Example:
-
-            ''''
-            def my_repos = [
-                "repo1": "master",
-                "repo2": "v1.0.1"
-            ]
-            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos]
-            ''''
-
-         - set_build_name:
-            !Optional!
-            Set currect build name with additional info.
-            Must be bool "false/true". If not defined - defaults to "false". Example:
-
-            ''''
-            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "set_build_name": true]
-            ''''
-
-         - git_project_name:
-            !Optional!
-            Set project id for searching across ADS collections (use \$ at the end of string to allow precise searching. Example: "TEST_PROJECT\$"). Example:
-
-            ''''
-            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "git_project_name": "MY_ADS_PROJECT"]
-            ''''
-
-         - sast_hide_debug:
-            !Optional!
-            Allows to reduce SAST log generations is jenkins console output (Default "true") . Example:
-
-            ''''
-            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_hide_debug": false]
-            ''''
-
-         - is_debug:
-            !Optional!
-            Turn on additional debuging info for shared library functions (Output to jenkins console log)
-
-            ''''
-            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "is_debug": true]
-            ''''
-
-         - sast_cac:
-            !Optional!
-            Enables SAST configuration as code (Please refer Checkmarx manual:
-            https://checkmarx.atlassian.net/wiki/spaces/SD/pages/1457226433/Setting+up+Scans+in+Jenkins)
-            Default to false. Example:
-
-            ''''
-            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_cac": true]
-            ''''
-
-         - sast_incremental:
-            !Optional!
-            Enables SAST encremental scans. Default to false. Example:
-
-            ''''
-            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_incremental": true]
-            ''''
-
+        Detailed reference could be found at doSastCheck.txt
         */
         case "manualWithParameters":
+            // Define variable out of withCredentials scope to persists it's value
+            def git_project_full_name = ""
+            def git_project_id = ""
+
             withCredentials([sshUserPrivateKey(credentialsId: git_cred_id, keyFileVariable: 'KEY', usernameVariable: 'GIT_USER')]) {
-                def git_project_id = ""
                 withCredentials([string(credentialsId: git_api_cred_id, variable: 'TOKEN')]) {
                     if(!parameters.git_project_name){
                         withFolderProperties {
@@ -145,16 +94,16 @@ def call(String func, Map parameters = [:]) {
                         }
                     }
 
-                    git_project_id = sastFunc.getGitProjects(GIT_USER, 
-                                                            git_api_proto, 
-                                                            git_api_port, 
-                                                            git_base_url, 
-                                                            git_collection_path, 
-                                                            parameters.git_project_name, 
-                                                            git_project_req_elements, 
-                                                            git_api_url_prefix, 
-                                                            TOKEN, 
-                                                            parameters.is_debug)
+                    (git_project_id, git_project_full_name) = sastFunc.getGitProjects(GIT_USER, 
+                                                                git_api_proto, 
+                                                                git_api_port, 
+                                                                git_base_url, 
+                                                                git_collection_path, 
+                                                                parameters.git_project_name, 
+                                                                git_project_req_elements, 
+                                                                git_api_url_prefix, 
+                                                                TOKEN, 
+                                                                parameters.is_debug)
                 }
                 
                 sastFunc.gitCheckoutRepos(parameters.repos_for_scan,
@@ -170,8 +119,13 @@ def call(String func, Map parameters = [:]) {
                                                             func,
                                                             parameters.set_build_name)
             }
+
+            if(parameters.sast_project_name == null) {
+                parameters.sast_project_name = git_project_full_name // Set SAST project name based on git_project_id (following DSOPROJECT-2150)
+            }
+
             withCredentials([string(credentialsId: git_api_cred_id, variable: 'SAST_PASSWORD')]) {
-                sastFunc.doSastScan(parameters.git_project_name, sast_proto,
+                sastFunc.doSastScan(parameters.sast_project_name, sast_proto,
                                                                 sast_base_url, 
                                                                 sast_port, 
                                                                 sast_generate_pdf_report, 
@@ -180,8 +134,15 @@ def call(String func, Map parameters = [:]) {
                                                                 sast_project_policy_enforce,
                                                                 parameters.sast_hide_debug,
                                                                 parameters.sast_cac,
-                                                                parameters.sast_incremental)
+                                                                parameters.sast_incremental,
+                                                                parameters.sast_group_id)
             }
+
+            // Generate sast reports for target scan
+            if (parameters.sast_generate_reports) {
+                sastFunc.genSastReport(sast_server_cred_id, parameters.sast_project_name, parameters.sast_generate_reports_email_list)
+            }
+            
             cleanWs() // Clean project space from sast check artifacts
             break
         case "interactive":
@@ -190,58 +151,9 @@ def call(String func, Map parameters = [:]) {
             to allow granulary selection of git repository names and branches/tags
             for your ADS project.
 
-            Available parameters to call function "interactive":
-            - set_build_name:
-                !Optional!
-                Set currect build name with additional info.
-                Must be bool "false/true". If not defined - defaults to "false". Example:
-
-                ''''
-                doSastCheck "interactive", ["set_build_name": true]
-                ''''
-
-            - git_project_name:
-                !Optional!
-                Set project id for searching across ADS collections (use \$ at the end of string to allow precise searching. Example: "TEST_PROJECT\$"). Example:
-
-                ''''
-                doSastCheck "interactive", ["git_project_name": "MY_ADS_PROJECT"]
-                ''''
-
-            - sast_hide_debug:
-                !Optional!
-                Allows to reduce SAST log generations is jenkins console output (Default "true") . Example:
-
-                ''''
-                doSastCheck "interactive", ["sast_hide_debug": false]
-                ''''
-
-            - is_debug:
-                !Optional!
-                Turn on additional debuging info for shared library functions (Output to jenkins console log)
-
-                ''''
-                doSastCheck "interactive", ["is_debug": true]
-                ''''
-
-            - sast_cac:
-                !Optional!
-                Enables SAST configuration as code (Please refer Checkmarx manual:
-                https://checkmarx.atlassian.net/wiki/spaces/SD/pages/1457226433/Setting+up+Scans+in+Jenkins)
-                Default to false. Example:
-
-                ''''
-                doSastCheck "interactive", ["sast_cac": true]
-                ''''
-
-            - sast_incremental:
-                !Optional!
-                Enables SAST encremental scans. Default to false. Example:
-
-                ''''
-                doSastCheck "interactive", ["sast_incremental": true]
-                ''''
+            Detailed reference could be found at doSastCheck.txt
             */
+            def git_project_full_name = ""  // Define variable out of withCredentials scope to persists it's value
             withCredentials([sshUserPrivateKey(credentialsId: git_cred_id, keyFileVariable: 'KEY', usernameVariable: 'GIT_USER')]) {
                 def dynamicParameters = []
                 user_input_repo_name = "" // Used later to save repo_name to be able to recreacte map from string if only one repo is founded
@@ -255,16 +167,16 @@ def call(String func, Map parameters = [:]) {
                             parameters.git_project_name = "${env.PROJECT_ID}"
                         }
                     }
-                    git_project_id = sastFunc.getGitProjects(GIT_USER, 
-                                                            git_api_proto, 
-                                                            git_api_port, 
-                                                            git_base_url, 
-                                                            git_collection_path, 
-                                                            parameters.git_project_name, 
-                                                            git_project_req_elements, 
-                                                            git_api_url_prefix, 
-                                                            TOKEN, 
-                                                            parameters.is_debug)
+                    (git_project_id, git_project_full_name) = sastFunc.getGitProjects(GIT_USER, 
+                                                                git_api_proto, 
+                                                                git_api_port, 
+                                                                git_base_url, 
+                                                                git_collection_path, 
+                                                                parameters.git_project_name, 
+                                                                git_project_req_elements, 
+                                                                git_api_url_prefix, 
+                                                                TOKEN, 
+                                                                parameters.is_debug)
                 
                     // Get all repos for finded repo
                     projects_list = sastFunc.getGitProjectRepos(GIT_USER, 
@@ -313,8 +225,12 @@ def call(String func, Map parameters = [:]) {
                                                             parameters.set_build_name)
             }
             
+            if(parameters.sast_project_name == null) {
+                parameters.sast_project_name = git_project_full_name // Set SAST project name based on git_project_id (following DSOPROJECT-2150)
+            }
+
             withCredentials([string(credentialsId: git_api_cred_id, variable: 'SAST_PASSWORD')]) {
-                sastFunc.doSastScan(parameters.git_project_name, sast_proto, 
+                sastFunc.doSastScan(parameters.sast_project_name, sast_proto, 
                                                                 sast_base_url, 
                                                                 sast_port, 
                                                                 sast_generate_pdf_report, 
@@ -323,8 +239,15 @@ def call(String func, Map parameters = [:]) {
                                                                 sast_project_policy_enforce,
                                                                 parameters.sast_hide_debug,
                                                                 parameters.sast_cac,
-                                                                parameters.sast_incremental)
+                                                                parameters.sast_incremental,
+                                                                parameters.sast_group_id)
             }
+
+            // Generate sast reports for target scan
+            if (parameters.sast_generate_reports) {
+                sastFunc.genSastReport(sast_server_cred_id, parameters.sast_project_name, parameters.sast_generate_reports_email_list)
+            }
+
             cleanWs() // Clean project space from sast check artifacts
             break
     }
