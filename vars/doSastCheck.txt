@@ -1,0 +1,170 @@
+# Checkmarx SAST shared library
+Function name: **doSastCheck**
+
+## External wiki link
+https://kb.gazprom-neft.local/pages/viewpage.action?pageId=76853855
+
+## Example of usage
+
+- **Interactive**:
+
+    >Allows to start SAST scan check with interactive jenkins UI promt
+    to allow granulary selection of git repository names and branches/tags
+    for your ADS project.
+    
+		@Library("dsoLibrary") _
+			pipeline {
+				agent {
+					label "${BUILD_ENVIRONMENT}"
+				}
+			 
+				stages {
+					stage('Sast scan') {
+						steps {
+							doSastCheck "interactive"
+						}
+					}
+				}
+			}
+			
+- **Non Interactive**:
+	
+    >Allows to start SAST scan check with fully automated process with predefined list
+    of git repository names and branches/tags for your ADS project.
+    
+		@Library("dsoLibrary") _ 
+			// Defining list with repo names и branch/tag to checkout and scan with SAST
+			def my_repos = [
+				"repo1": "master",
+				"repo2": "v1.0.1"
+			]
+			 
+			pipeline {
+				agent {
+					label "${BUILD_ENVIRONMENT}"
+				}
+			 
+				stages {
+					stage('Sast scan') {
+						steps {
+							doSastCheck "manualWithParameters", ["repos_for_scan": my_repos]
+						}
+					}
+				}
+			}
+
+
+## Available parameters:
+
+- **set_build_name**:
+    >**Optional**\
+    Set currect build name with additional info.
+    Must be bool "false/true".\
+    **Default:** "false"
+
+    **Example**:
+        
+        doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "set_build_name": true]
+        
+
+
+- **git_project_name**:
+
+    >**Optional**\
+    Set project id for searching across ADS collections (use \$ at the end of string to allow precise searching. Example: "TEST_PROJECT\$").
+    
+    **Example**:
+    
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "git_project_name": "MY_ADS_PROJECT"]
+
+
+- **sast_hide_debug**:
+
+    >**Optional**\
+    Allows to reduce SAST log generations is jenkins console output.\
+    **Default:** "true"
+    
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_hide_debug": false]
+
+
+- **is_debug**:
+
+    >**Optional**\
+    Turn on additional debuging info for shared library functions (Output to jenkins console log)\
+    **Default:** "false"
+    
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "is_debug": true]
+
+
+- **sast_cac**:
+
+    >**Optional**\
+    Enables SAST configuration as code.\
+	Please refer Checkmarx manual:
+    https://checkmarx.atlassian.net/wiki/spaces/SD/pages/1457226433/Setting+up+Scans+in+Jenkins\
+	**Default:** "false"
+	
+	**Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_cac": true]
+
+
+- **sast_incremental**:
+
+    >**Optional**\
+    Enables SAST encremental scans. Defaultt to false.\
+    **Default:** "false"
+    	
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_incremental": true]
+
+
+- **sast_project_name**:
+
+    >**Optional**\
+    Sets SAST project name.\
+    **Default:** "${env.PROJECT_ID}_${env.PROJECT_NAME}"
+    
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_project_name": "SAST123"]
+
+
+- **sast_group_id**:
+
+    >**Optional**\
+    Sets SAST groupId paramter.\
+    **Default:** "1"
+    
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_group_id": "3"]
+	
+	
+- **sast_generate_reports**:
+
+    >**Optional**\
+    If defined, SAST scan reports in xml, csv, pdf formats will be generated upon successful project scan.\
+    **Default:** "false"
+    
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_generate_reports": true]
+	
+	
+- **sast_generate_reports_email_list**:
+
+    >**Optional**\
+    If defined, the reports was generated will be send over email to target recipients.
+    Provided list must be comma or whitespace separated. \
+    **Default:** ""
+    
+    **Example**:
+    	 
+        doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_generate_reports": true, "sast_generate_reports_email_list": "abc@abc.ru, xyz@xyz.ru"]
+    	
