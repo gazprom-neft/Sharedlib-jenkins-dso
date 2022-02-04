@@ -19,7 +19,7 @@ import com.gpn.pipeline.SastFunction
 @Field sast_port = "${env.SL_SAST_SERVER_PORT}" //SAST server tcp port. Example: "8443"
 @Field sast_generate_pdf_report = true // Allows SAST to return pdf report to jenkins build (Default "true")
 @Field sast_password = "${env.SL_SAST_PASS_CRED_ID}" // Jenkins credential id with SAST encrypted password (string)
-@Field sast_project_policy_enforce = false // Enforce SAST policy to return error in jenkins build (Default "false") 
+@Field sast_project_policy_enforce = false // Enforce SAST policy to return error in jenkins build (Default "false")
 @Field sast_filter_pattern = '''!**/_cvs/**/*, !**/.svn/**/*, !**/.hg/**/*, !**/.git/**/*, !**/.bzr/**/*,
         !**/.gitgnore/**/*, !**/.gradle/**/*, !**/.checkstyle/**/*, !**/.classpath/**/*, !**/bin/**/*,
         !**/obj/**/*, !**/backup/**/*, !**/.idea/**/*, !**/*.DS_Store, !**/*.ipr, !**/*.iws,
@@ -62,6 +62,14 @@ def call(String func, Map parameters = [:]) {
     }
     if(parameters.set_build_name == null) {
         parameters.set_build_name = false // Define default to false if not exists
+    }
+    if(parameters.sast_group_id == null) {
+        parameters.sast_group_id = "1" // Define default to 1 (following DSOPROJECT-2137) if not exists
+    }
+    if(parameters.sast_project_name == null) {
+        withFolderProperties {
+            parameters.sast_project_name = "${env.PROJECT_ID}_${env.PROJECT_NAME}".toLowerCase() // Set default if not exists (following DSOPROJECT-2134)
+        }
     }
 
     switch(func) {
@@ -133,7 +141,20 @@ def call(String func, Map parameters = [:]) {
             ''''
             doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_incremental": true]
             ''''
+         - sast_project_name:
+            !Optional!
+            Sets SAST project name. Default to "${env.PROJECT_ID}_${env.PROJECT_NAME}". Example:
 
+            ''''
+            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_project_name": "SAST123"]
+            ''''
+         - sast_group_id:
+            !Optional!
+            Sets SAST groupId paramter. Default to "1". Example:
+
+            ''''
+            doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_group_id": "3"]
+            ''''
         */
         case "manualWithParameters":
             withCredentials([sshUserPrivateKey(credentialsId: git_cred_id, keyFileVariable: 'KEY', usernameVariable: 'GIT_USER')]) {
@@ -171,7 +192,7 @@ def call(String func, Map parameters = [:]) {
                                                             parameters.set_build_name)
             }
             withCredentials([string(credentialsId: git_api_cred_id, variable: 'SAST_PASSWORD')]) {
-                sastFunc.doSastScan(parameters.git_project_name, sast_proto,
+                sastFunc.doSastScan(parameters.sast_project_name, sast_proto,
                                                                 sast_base_url, 
                                                                 sast_port, 
                                                                 sast_generate_pdf_report, 
@@ -180,7 +201,8 @@ def call(String func, Map parameters = [:]) {
                                                                 sast_project_policy_enforce,
                                                                 parameters.sast_hide_debug,
                                                                 parameters.sast_cac,
-                                                                parameters.sast_incremental)
+                                                                parameters.sast_incremental,
+                                                                parameters.sast_group_id)
             }
             cleanWs() // Clean project space from sast check artifacts
             break
@@ -240,6 +262,22 @@ def call(String func, Map parameters = [:]) {
 
                 ''''
                 doSastCheck "interactive", ["sast_incremental": true]
+                ''''
+
+            - sast_project_name:
+                !Optional!
+                Sets SAST project name. Default to "${env.PROJECT_ID}_${env.PROJECT_NAME}". Example:
+
+                ''''
+                doSastCheck "interactive", ["sast_project_name": "SAST123"]
+                ''''
+
+            - sast_group_id:
+                !Optional!
+                Sets SAST groupId paramter. Default to "1". Example:
+
+                ''''
+                doSastCheck "interactive", ["sast_group_id": "3"]
                 ''''
             */
             withCredentials([sshUserPrivateKey(credentialsId: git_cred_id, keyFileVariable: 'KEY', usernameVariable: 'GIT_USER')]) {
@@ -314,7 +352,7 @@ def call(String func, Map parameters = [:]) {
             }
             
             withCredentials([string(credentialsId: git_api_cred_id, variable: 'SAST_PASSWORD')]) {
-                sastFunc.doSastScan(parameters.git_project_name, sast_proto, 
+                sastFunc.doSastScan(parameters.sast_project_name, sast_proto, 
                                                                 sast_base_url, 
                                                                 sast_port, 
                                                                 sast_generate_pdf_report, 
@@ -323,7 +361,8 @@ def call(String func, Map parameters = [:]) {
                                                                 sast_project_policy_enforce,
                                                                 parameters.sast_hide_debug,
                                                                 parameters.sast_cac,
-                                                                parameters.sast_incremental)
+                                                                parameters.sast_incremental,
+                                                                parameters.sast_group_id)
             }
             cleanWs() // Clean project space from sast check artifacts
             break
