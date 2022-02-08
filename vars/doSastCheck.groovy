@@ -34,7 +34,8 @@ import com.gpn.pipeline.SastFunction
         !**/*.htmls, !**/*.ihtml, !**/*.mht, !**/*.mhtm, !**/*.mhtml, !**/*.ssi, !**/*.stm,
         !**/*.bin,!**/*.lock,!**/*.svg,!**/*.obj,
         !**/*.stml, !**/*.ttml, !**/*.txn, !**/*.xhtm, !**/*.xhtml, !**/*.class, !**/*.iml, !Checkmarx/Reports/*.*,
-        !OSADependencies.json, !**/node_modules/**/*'''
+        !OSADependencies.json, !**/node_modules/**/*,
+        !**/*.csv, !**/*.backup, !**/*.docx, !**/*.xlsx, !**/*.doc, !**/*.xls, !**/*.webp, !**/*.pack, !**/*.tgz'''
 
 // *** Moved to parameters [:] default in main "call" function ***
 //@Field is_debug = true // Turn on additional debugging info
