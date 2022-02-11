@@ -127,12 +127,40 @@ class SastFunction {
     }
 
     // Cretate zip archive with all interesting data and send it to SAST server for scan proccess
-    public def doSastScan(project_id, sast_proto, sast_base_url, sast_port, sast_generate_pdf_report, sast_password,
-        sast_filter_pattern, sast_project_policy_enforce, sast_hide_debug, sast_cac, sast_incremental, sast_group_id) {
-        script.step([$class: 'CxScanBuilder', comment: '', configAsCode: sast_cac, credentialsId: '', excludeFolders: '', exclusionsSetting: 'global', failBuildOnNewResults: false, failBuildOnNewSeverity: 'HIGH',
-        filterPattern: sast_filter_pattern, fullScanCycle: 10, generatePdfReport: sast_generate_pdf_report, groupId: sast_group_id, password: sast_password, preset: '36', enableProjectPolicyEnforcement: sast_project_policy_enforce,
-        projectName: "${project_id}", sastEnabled: true, serverUrl: "${sast_proto}://${sast_base_url}:${sast_port}", sourceEncoding: '1', hideDebugLogs: sast_hide_debug, incremental: sast_incremental,
-        username: '', vulnerabilityThresholdResult: 'FAILURE', waitForResultsEnabled: true])
+    public def doSastScan(project_id, sast_proto, sast_base_url, sast_port, sast_generate_pdf_report, sast_password, sast_preset,
+                          sast_filter_pattern, sast_project_policy_enforce, sast_hide_debug, sast_cac, sast_incremental, sast_group_id,
+                          sast_vulnerability_threshold_enabled, sast_high_threshold, sast_medium_threshold, sast_low_threshold) 
+    {
+        script.step([
+            $class: 'CxScanBuilder', 
+            comment: '', 
+            configAsCode: sast_cac, 
+            credentialsId: '', 
+            excludeFolders: '', 
+            exclusionsSetting: sast_filter_pattern, 
+            failBuildOnNewResults: false, 
+            failBuildOnNewSeverity: 'HIGH',
+            filterPattern: sast_filter_pattern, 
+            fullScanCycle: 10, 
+            generatePdfReport: sast_generate_pdf_report, 
+            groupId: sast_group_id, 
+            password: sast_password, 
+            preset: sast_preset, 
+            enableProjectPolicyEnforcement: sast_project_policy_enforce,
+            projectName: "${project_id}", 
+            sastEnabled: true, 
+            serverUrl: "${sast_proto}://${sast_base_url}:${sast_port}", 
+            sourceEncoding: '1', 
+            hideDebugLogs: sast_hide_debug, 
+            incremental: sast_incremental,
+            username: '', 
+            waitForResultsEnabled: true, 
+            vulnerabilityThresholdEnabled: sast_vulnerability_threshold_enabled, 
+                highThreshold: sast_high_threshold, 
+                mediumThreshold: sast_medium_threshold, 
+                lowThreshold: sast_low_threshold,
+            vulnerabilityThresholdResult: 'FAILURE'
+        ])
     }
 
     // Set current job build name with additional help-info
