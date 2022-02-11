@@ -19,6 +19,7 @@ import com.gpn.pipeline.SastFunction
 @Field sast_port = "${env.SL_SAST_SERVER_PORT}" //SAST server tcp port. Example: "8443"
 @Field sast_generate_pdf_report = true // Allows SAST to return pdf report to jenkins build (Default "true")
 @Field sast_password = "${env.SL_SAST_PASS_CRED_ID}" // Jenkins credential id with SAST encrypted password (string)
+@Field sast_preset = "100009" // Checkmarx Default - GAZPROM-DEFAULT01
 @Field sast_project_policy_enforce = false // Enforce SAST policy to return error in jenkins build (Default "false")
 @Field sast_server_cred_id = "${env.SL_SAST_SERVER_CRED_ID}" // SAST credential id with username/password to access REST API (get token)
 @Field sast_filter_pattern = '''!**/_cvs/**/*, !**/.svn/**/*, !**/.hg/**/*, !**/.git/**/*, !**/.bzr/**/*,
@@ -34,7 +35,12 @@ import com.gpn.pipeline.SastFunction
         !**/*.htmls, !**/*.ihtml, !**/*.mht, !**/*.mhtm, !**/*.mhtml, !**/*.ssi, !**/*.stm,
         !**/*.bin,!**/*.lock,!**/*.svg,!**/*.obj,
         !**/*.stml, !**/*.ttml, !**/*.txn, !**/*.xhtm, !**/*.xhtml, !**/*.class, !**/*.iml, !Checkmarx/Reports/*.*,
-        !OSADependencies.json, !**/node_modules/**/*'''
+        !OSADependencies.json, !**/node_modules/**/*,
+        !**/*.csv, !**/*.backup, !**/*.docx, !**/*.xlsx, !**/*.doc, !**/*.xls, !**/*.webp, !**/*.pack, !**/*.tgz'''
+@Field sast_vulnerability_threshold_enabled = false        //Mark the build as unstable if the number of high severity vulnerabilities is above the specified threshold.
+@Field sast_high_threshold = 0
+@Field sast_medium_threshold = 0
+@Field sast_low_threshold = 0
 
 // *** Moved to parameters [:] default in main "call" function ***
 //@Field is_debug = true // Turn on additional debugging info
@@ -73,6 +79,21 @@ def call(String func, Map parameters = [:]) {
     if(parameters.sast_generate_reports_email_list == null) {
         parameters.sast_generate_reports_email_list = "" // Define default to empty string
     }
+    if(parameters.sast_preset != null) {
+        sast_preset = parameters.sast_preset
+    }
+    if(parameters.sast_vulnerability_threshold_enabled != null) {
+        sast_vulnerability_threshold_enabled = parameters.sast_vulnerability_threshold_enabled
+    }   
+    if(parameters.sast_high_threshold != null) {
+        sast_high_threshold = parameters.sast_high_threshold
+    }   
+    if(parameters.sast_medium_threshold != null) {
+        sast_medium_threshold = parameters.sast_medium_threshold
+    }   
+    if(parameters.sast_low_threshold != null) {
+        sast_low_threshold = parameters.sast_low_threshold
+    }   
 
     switch(func) {
         /*
@@ -129,13 +150,18 @@ def call(String func, Map parameters = [:]) {
                                                                 sast_base_url, 
                                                                 sast_port, 
                                                                 sast_generate_pdf_report, 
-                                                                SAST_PASSWORD, 
+                                                                SAST_PASSWORD,
+                                                                sast_preset,
                                                                 sast_filter_pattern,
                                                                 sast_project_policy_enforce,
                                                                 parameters.sast_hide_debug,
                                                                 parameters.sast_cac,
                                                                 parameters.sast_incremental,
-                                                                parameters.sast_group_id)
+                                                                parameters.sast_group_id,
+                                                                sast_vulnerability_threshold_enabled,
+                                                                sast_high_threshold,
+                                                                sast_medium_threshold,
+                                                                sast_low_threshold)
             }
 
             // Generate sast reports for target scan
@@ -234,13 +260,18 @@ def call(String func, Map parameters = [:]) {
                                                                 sast_base_url, 
                                                                 sast_port, 
                                                                 sast_generate_pdf_report, 
-                                                                SAST_PASSWORD, 
+                                                                SAST_PASSWORD,
+                                                                sast_preset,
                                                                 sast_filter_pattern,
                                                                 sast_project_policy_enforce,
                                                                 parameters.sast_hide_debug,
                                                                 parameters.sast_cac,
                                                                 parameters.sast_incremental,
-                                                                parameters.sast_group_id)
+                                                                parameters.sast_group_id,
+                                                                sast_vulnerability_threshold_enabled,
+                                                                sast_high_threshold,
+                                                                sast_medium_threshold,
+                                                                sast_low_threshold)
             }
 
             // Generate sast reports for target scan
