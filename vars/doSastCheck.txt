@@ -167,4 +167,32 @@ https://kb.gazprom-neft.local/pages/viewpage.action?pageId=76853855
     **Example**:
     	 
         doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_generate_reports": true, "sast_generate_reports_email_list": "abc@abc.ru, xyz@xyz.ru"]
-    	
+
+
+- **sast_preset**:
+
+    >**Optional**\
+    Checkmarx preset\
+    **Default:** "100009" (GAZPROM-DEFAULT01)
+    
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_preset": '100009']
+
+
+- **sast_vulnerability_threshold_enabled**:
+
+    >**Optional**
+    Mark the build as FAILED if the number of high severity vulnerabilities is above the specified threshold.
+    **Default:** false
+    
+    ***sast_high_threshold, sast_medium_threshold, sast_low_threshold***:
+    severity vulnerability threshold
+    ***Default*** 0
+
+
+    **Example**:
+    	 
+    	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_vulnerability_threshold_enabled": true, \
+                "sast_high_threshold": 0, "sast_medium_threshold": 10, "sast_low_threshold": 100]
+
