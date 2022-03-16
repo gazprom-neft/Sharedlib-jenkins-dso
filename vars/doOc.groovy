@@ -15,6 +15,15 @@ def call(String func, Map parameters = [:]) {
                            parameters.ocpUrlTarget, 
                            parameters.ocpNamespace)
             break
+        case "loginVault":
+            println "=====ocp login with vault====="
+            ocFunc.ocLoginVault(parameters.ocpCredId,
+                           parameters.ocpUrlTarget, 
+                           parameters.ocpNamespace,
+                           parameters.vaultUrl,
+                           parameters.secretPrefixPath,
+                           parameters.secretPath)
+            break
         case "installMoonTemplate":
             println "=== ocp install Moon template ==="
             ocFunc.ocInstallSpecTemplate(parameters.quayRegistry,
@@ -30,8 +39,8 @@ def call(String func, Map parameters = [:]) {
         case "createSecret":
             println "=====ocp create secrets for registry====="
             ocFunc.ocCreateSecrets(parameters.registryCredId, 
-                                parameters.registryList, 
-                                parameters.registryPort, 
+                                parameters.registryList,
+                                parameters.registryPort,
                                 parameters.ocpNamespace)
             break
         case "tag":

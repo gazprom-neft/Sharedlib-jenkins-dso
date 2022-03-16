@@ -19,7 +19,23 @@ class LoginUtils {
             variable: 'TOKEN'
         )]) {
             script.sh """
-                oc login $ocpUrlTarget --token $script.TOKEN --namespace $ocpNamespace
+                oc login '$ocpUrlTarget' --token '$script.TOKEN' --namespace '$ocpNamespace'
+            """
+        }
+    }
+    /**
+        Login into docker registry
+        @param registryCredId ID of cred for login into docker registry
+        @param registry URL of desired cluster
+    */
+    public void dockerLogin(String registryCredId, String registry) {
+        script.withCredentials([script.usernamePassword(
+            credentialsId: registryCredId, 
+            usernameVariable: 'USERNAME', 
+            passwordVariable: 'PASSWORD'
+        )]) {
+            script.sh """
+                docker login '$registry' -u '$script.USERNAME' -p '$script.PASSWORD'
             """
         }
     }

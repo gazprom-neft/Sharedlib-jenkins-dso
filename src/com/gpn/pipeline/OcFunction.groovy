@@ -24,6 +24,27 @@ class OcFunction {
         }
     }
     /**
+        Login to ocp cluster with Vault
+        @param ocpCredId ID of cred for login into OKD/OCP cluster
+        @param ocpUrlTarget Path of desired cluster
+        @param ocpNamespace OCP Namespace
+        @param vaultURL URL to Hashicorp Vault
+        @param secretPrefixPath Path to project area on Vault
+        @param secretPath Path to secret in vault project area
+    */
+    public void ocLoginVault(String ocpCredId, String ocpUrlTarget, String ocpNamespace, String vaultUrl, String secretPrefixPath, String secretPath) {
+        def vaultSecret = [[path: secretPath, engineVersion: 2, secretValues: [[envVar: 'TOKEN', vaultKey: 'token']]]]
+        def vaultConf = [vaultUrl: vaultUrl, vaultCredentialId: ocpCredId, prefixPath: secretPrefixPath, engineVersion: 2]
+        script.withVault([
+            configuration: vaultConf,
+            vaultSecrets: vaultSecret
+        ]) {
+            script.sh """
+                oc login $ocpUrlTarget --token $script.TOKEN --namespace $ocpNamespace
+            """
+        }
+    }
+    /**
         Get UID or GID
         @param entity string
         @param ocpNamespace OCP Namespace
@@ -96,8 +117,8 @@ class OcFunction {
                 set +e
                 for i in $registryList
                 do
-                oc create secret docker-registry \${i} -n $ocpNamespace --docker-server=\${i}$registryPort --docker-username=$script.USERNAME --docker-password=$script.PASSWORD --docker-email=koa@gazprom-neft.ru
-                oc secrets link --for=pull default \${i} -n $ocpNamespace
+                oc create secret docker-registry \${i} -n '$ocpNamespace' --docker-server=\${i}'$registryPort' --docker-username='$script.USERNAME' --docker-password='$script.PASSWORD'
+                oc secrets link --for=pull default \${i} -n '$ocpNamespace'
                 done
                 set -e
             """

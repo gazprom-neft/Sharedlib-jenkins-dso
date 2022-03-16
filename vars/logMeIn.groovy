@@ -10,6 +10,9 @@ def call(String place, Map parameters = [:], Closure body=null) {
     LoginUtils logUtils = new LoginUtils(this)
 
     switch(place) {
+        case "docker":
+            logUtils.dockerLogin(parameters.registryCred, parameters.registry)      
+            break
         case "ocp":
             logUtils.ocpLogin(parameters.registryCred, parameters.urlTarget, parameters.ocpNamespace)
             break
