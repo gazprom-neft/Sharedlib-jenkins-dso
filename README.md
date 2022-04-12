@@ -109,15 +109,15 @@
 
         stage("OCP check image") {
 		when {
-		    not {
-			expression {
-			    doOc("checkIS", ["ocpAppName"  : "$OCP_APP_NAME",
-					     "ocpNamespace": "$OCP_NAMESPACE"])
-			}
-		    }
+			    not {
+					expression {
+						    doOc("checkIS", ["ocpAppName"  : "$OCP_APP_NAME",
+								     "ocpNamespace": "$OCP_NAMESPACE"])
+					}
+			    }
 		}
 		steps {
-		    doOc("status", ["ocpAppName": "$OCP_APP_NAME"])
+		   	doOc("status", ["ocpAppName": "$OCP_APP_NAME"])
 		}
         }
 
