@@ -145,7 +145,7 @@
     >**Optional**\
     Enables SAST configuration as code.\
 	Please refer Checkmarx manual:
-    https://checkmarx.atlassian.net/wiki/spaces/SD/pages/1457226433/Setting+up+Scans+in+Jenkins\
+    https://checkmarx.atlassian.net/wiki/spaces/SD/pages/1457226433/Setting+up+Scans+in+Jenkins
 	**Default:** "false"
 	
 	**Example**:
