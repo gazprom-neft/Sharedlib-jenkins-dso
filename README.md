@@ -319,12 +319,12 @@
 
 ## **4. UiTesting**
 -  UiTesting - includes maven from software , run with keys pointing to settings
--- 
+
 
 ## Glossary General Terms
---[Glossary](https://www.jenkins.io/doc/book/glossary/#glossary) 
+-- [Glossary](https://www.jenkins.io/doc/book/glossary/#glossary) 
 
---The flowchart below is an example of one CD scenario easily modeled in Jenkins Pipeline:
+-- The flowchart below is an example of one CD scenario easily modeled in Jenkins Pipeline:
 
 ![i9BUJ](https://user-images.githubusercontent.com/82883746/143893316-daf6e8e1-dffe-4aad-857f-c1415755d7c2.png)
 
