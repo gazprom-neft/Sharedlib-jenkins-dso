@@ -24,54 +24,6 @@
 
     // import shared library
        @Library("dsoLibrary") _
- ## Example
-  
-      №1  steps {
-                // use name of the patchset as the build name
-                wrap([$class: 'BuildUser']){
-                    script {
-                        if ("${params.BRANCH}" == 'null'){
-                            buildName "$BUILD_NUMBER-$GIT_COMMIT_SHORT"
-                            }
-                        else {
-                            buildName "$BUILD_NUMBER-$BUILD_ENVIRONMENT-${params.BRANCH}-$GIT_COMMIT_SHORT"
-                            }
-                            }
-       
-     №2   stage("OCP login") {
-            steps {
-                echo "=====ocp login====="
-                logMeIn("ocp", ["registryCred": "$OCP_CRED_ID", "urlTarget": "$OCP_URL_TARGET", "ocpNamespace": "$OCP_NAMESPACE"])
-            }
-        }
-
-[vars] 
--  UiTesting - includes maven from software , run with keys pointing to settings
--- 
-
-## Glossary General Terms
---[Glossary](https://www.jenkins.io/doc/book/glossary/#glossary) 
-
---The flowchart below is an example of one CD scenario easily modeled in Jenkins Pipeline:
-
-![i9BUJ](https://user-images.githubusercontent.com/82883746/143893316-daf6e8e1-dffe-4aad-857f-c1415755d7c2.png)
-
-
-
-# 👥  Gazprom Team
-| Name | Handle | Company | Title |
-| --- | --- | --- | --- |
-|Pavel Lipatov | @pabloli84 | Gazprom-Neft | Head of DevOps |
-|Lev Melentev | @levurevich | Gazprom-Neft | Team Tech Lead |
-|Artem Batalov| @aruchibarudo | Gazprom-Neft | Sr. System Engineer |
-|Evgenij Ovchinnikov | @benderit |  Gazprom-Neft | Sr. System Engineer |
-|Evgenij Kurnosov | @olmerdale | Gazprom-Neft | Sr. System Engineer |
-|Evgenij Khokhlov | @rageofgods | Gazprom-Neft | Sr. System Engineer |
-|Georgij Anikin | @g-anikin |  Gazprom-Neft | Sr. System Engineer |
-|Mihail Perov | @perovma | Gazprom-Neft | Sr. System Engineer |
-|Aleksandr Petlin | @jakondo09 | Gazprom-Neft | Sr. System Engineer |
-|Dmitrij Seleznev | @dimako12 | Gazprom-Neft | Sr. System Engineer |
-|Stanislav Sobol' | @pokamolodoy406 | Gazprom-Neft | IT.security |
 
 ## **1. doOc**
 ###### OcFunction - Login to ocp cluster; Get UID or GID;  Install Moon (or like this) template;
@@ -364,3 +316,29 @@
                                                            --build-arg NEXUS_URL=${NEXUS_URL}"])
             }
         }    
+
+## **4. UiTesting**
+-  UiTesting - includes maven from software , run with keys pointing to settings
+-- 
+
+## Glossary General Terms
+--[Glossary](https://www.jenkins.io/doc/book/glossary/#glossary) 
+
+--The flowchart below is an example of one CD scenario easily modeled in Jenkins Pipeline:
+
+![i9BUJ](https://user-images.githubusercontent.com/82883746/143893316-daf6e8e1-dffe-4aad-857f-c1415755d7c2.png)
+
+# 👥  Gazprom Team
+| Name | Handle | Company | Title |
+| --- | --- | --- | --- |
+|Pavel Lipatov | @pabloli84 | Gazprom-Neft | Head of DevOps |
+|Lev Melentev | @levurevich | Gazprom-Neft | Team Tech Lead |
+|Artem Batalov| @aruchibarudo | Gazprom-Neft | Sr. System Engineer |
+|Evgenij Ovchinnikov | @benderit |  Gazprom-Neft | Sr. System Engineer |
+|Evgenij Kurnosov | @olmerdale | Gazprom-Neft | Sr. System Engineer |
+|Evgenij Khokhlov | @rageofgods | Gazprom-Neft | Sr. System Engineer |
+|Georgij Anikin | @g-anikin |  Gazprom-Neft | Sr. System Engineer |
+|Mihail Perov | @perovma | Gazprom-Neft | Sr. System Engineer |
+|Aleksandr Petlin | @jakondo09 | Gazprom-Neft | Sr. System Engineer |
+|Dmitrij Seleznev | @dimako12 | Gazprom-Neft | Sr. System Engineer |
+|Stanislav Sobol' | @pokamolodoy406 | Gazprom-Neft | IT.security |
