@@ -29,8 +29,6 @@
 - OcFunction - Login to ocp cluster; Get UID or GID;  Install Moon (or like this) template;
 - required unification from CaaS side with service naming;
 
-- DockerFunction - login, build and publish
-
 ## Example of usage
 
 - **login**:
