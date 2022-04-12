@@ -295,7 +295,7 @@
 
 - **login**:
 
-    >#####**Log in to a Docker registry**
+    >##### **Log in to a Docker registry**
     *@param* **registryCred** ID of cred for login to docker registry\
     *@param* **registry** URL of desired docker-registry service
 
@@ -308,7 +308,7 @@
 
 - **build**:
 
-    >#####**Build an image from a Dockerfile**
+    >##### **Build an image from a Dockerfile**
     *@param* **registry** URL of desired docker-registry service\
     *@param* **ocpNamespace** project OCP namespace\
     *@param* **ocpAppName** OCP name used for application\
@@ -330,7 +330,7 @@
 
 - **push**:
 
-    >#####**Push an image or a repository to a registry**
+    >##### **Push an image or a repository to a registry**
     *@param* **registry** URL of desired docker-registry service\
     *@param* **ocpNamespace** project OCP namespace\
     *@param* **ocpAppName** OCP name used for application\
@@ -347,7 +347,7 @@
 
 - **dockerFull**:
 
-    >#####**Typical docker build pipeline: Log in, Build and Push an image to a registry**
+    >##### **Typical docker build pipeline: Log in, Build and Push an image to a registry**
     *@param* **registryCred** ID of cred for login to docker registry\
     *@param* **registry** URL of desired docker-registry service\
     *@param* **ocpNamespace** project OCP namespace\
