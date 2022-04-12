@@ -46,7 +46,6 @@
         }
 
 ## Pipeline
--  DockerFunction - build and publish
 -  LoginUtils - authorization using the "oc" utility
 
 [vars] 
@@ -78,11 +77,11 @@
 |Stanislav Sobol' | @pokamolodoy406 | Gazprom-Neft | IT.security |
 
 ## **1. doOc**
-### OcFunction - Login to ocp cluster; Get UID or GID;  Install Moon (or like this) template;\
-### required unification from CaaS side with service naming;\ 
-### Create OCP secrets for registry;\ 
-### Get status of image stream;\
-### Deploy or change templates from specific directory
+##### OcFunction - Login to ocp cluster; Get UID or GID;  Install Moon (or like this) template;
+##### required unification from CaaS side with service naming;
+##### Create OCP secrets for registry;
+##### Get status of image stream;
+##### Deploy or change templates from specific directory
 
 | Функция                              | Параметры. Все параметры типа String                                                                      | Описание                                                                                                       | Шаг в Jenkins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | :----------------------------------: | :-------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -94,8 +93,9 @@
 | **deployTemplate**                   | *ocpNamespace*                                                                                            | **Развернуть шаблон**                                                                                          | doOc("deployTemplate", ["ocpNamespace":&ensp;"$OCP_NAMESPACE"])                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 
-## **2. Библиотека doSastCheck**
-### Выполняет проверку исходного кода на уязвимости с помощью Checkmarx SAST
+## **2. doSastCheck**
+##### With Checkmarx SAST™, you can run fast and accurate incremental or full scans whenever you need them. 
+##### Trust our industry-leading SAST solution to give you the flexibility, accuracy, and coverage to secure your most critical code commits, within your rule sets, at scale.
 
 ## Example of usage
 
@@ -289,8 +289,8 @@
     	doSastCheck "manualWithParameters", ["repos_for_scan": my_repos, "sast_vulnerability_threshold_enabled": true, \
                 "sast_high_threshold": 0, "sast_medium_threshold": 10, "sast_low_threshold": 100]
 
-## **3. Библиотека doDocker**
-### Выполняет авторизацию, сборку, загрузку собранного артефакта в docker registry
+## **3. doDocker**
+### DockerFunction - login, build and publish
 
 ## Example of usage
 
