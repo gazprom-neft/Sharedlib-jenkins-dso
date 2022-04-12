@@ -64,9 +64,9 @@
 |Pavel Lipatov | @pabloli84 | Gazprom-Neft | Head of DevOps |
 |Lev Melentev | @levurevich | Gazprom-Neft | Team Tech Lead |
 |Artem Batalov| @aruchibarudo | Gazprom-Neft | Sr. System Engineer |
-|Andrey Kuzmin | @HillReywer |  Gazprom-Neft | Sr. System Engineer |
+|Evgenij Ovchinnikov | @benderit |  Gazprom-Neft | Sr. System Engineer |
 |Evgenij Kurnosov | @olmerdale | Gazprom-Neft | Sr. System Engineer |
-|Eugene Khokhlov | @rageofgods | Gazprom-Neft | Sr. System Engineer |
+|Evgenij Khokhlov | @rageofgods | Gazprom-Neft | Sr. System Engineer |
 |Georgij Anikin | @g-anikin |  Gazprom-Neft | Sr. System Engineer |
 |Mihail Perov | @perovma | Gazprom-Neft | Sr. System Engineer |
 |Aleksandr Petlin | @jakondo09 | Gazprom-Neft | Sr. System Engineer |
