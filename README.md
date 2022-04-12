@@ -48,7 +48,6 @@
 ## Pipeline
 -  DockerFunction - build and publish
 -  LoginUtils - authorization using the "oc" utility
--  OcFunction - Login to ocp cluster; Get UID or GID;  Install Moon (or like this) template; required unification from CaaS side with service naming; Create OCP secrets for registry; Get status of image stream; Deploy or change templates from specific directory
 
 [vars] 
 -  UiTesting - includes maven from software , run with keys pointing to settings
@@ -78,10 +77,12 @@
 |Dmitrij Seleznev | @dimako12 | Gazprom-Neft | Sr. System Engineer |
 |Stanislav Sobol' | @pokamolodoy406 | Gazprom-Neft | IT.security |
 
-# **Библиотеки sharedLibs**
-
-## **1. Библиотека doOc**
-### Предоставляет легкий доступ к функционалу утилиты oc.
+## **1. doOc**
+### OcFunction - Login to ocp cluster; Get UID or GID;  Install Moon (or like this) template;\
+### required unification from CaaS side with service naming;\ 
+### Create OCP secrets for registry;\ 
+### Get status of image stream;\
+### Deploy or change templates from specific directory
 
 | Функция                              | Параметры. Все параметры типа String                                                                      | Описание                                                                                                       | Шаг в Jenkins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | :----------------------------------: | :-------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
