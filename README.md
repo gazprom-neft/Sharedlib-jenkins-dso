@@ -42,9 +42,30 @@
 
         stage("OCP login") {
             steps {
-		doOc("login", ["ocpCredId"   : "$OCP_CRED_ID",
-			       "ocpUrlTarget": "$OCP_URL_TARGET",
-			       "ocpNamespace": "$OCP_NAMESPACE"])
+			doOc("login", ["ocpCredId"   : "$OCP_CRED_ID",
+				       "ocpUrlTarget": "$OCP_URL_TARGET",
+				       "ocpNamespace": "$OCP_NAMESPACE"])
+            }
+        }
+
+- **loginVault**:
+
+    >##### **Login to ocp cluster with vault**
+    *@param* **ocpCredId**\
+    *@param* **ocpUrlTarget**\
+    *@param* **ocpNamespace**\
+    *@param* **vaultUrl**\
+    *@param* **secretPrefixPath**\
+    *@param* **secretPath**
+
+        stage("OCP login with vault") {
+            steps {
+			doOc("loginVault", ["ocpCredId"       : "$VAULT_APPROLE_CRED_ID",
+					    "ocpUrlTarget"    : "$OCP_URL_TARGET",
+					    "ocpNamespace"    : "$OCP_NAMESPACE",
+					    "vaultUrl"        : "$VAULT_TRUST_URL",
+					    "secretPrefixPath": "$VAULT_SECRET_PREFIX_PATH",            
+					    "secretPath"      : "$VAULT_SECRET_PATH"])
             }
         }
 
