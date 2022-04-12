@@ -317,9 +317,6 @@
             }
         }    
 
-## **4. UiTesting**
--  UiTesting - includes maven from software , run with keys pointing to settings
-
 
 ## Glossary General Terms
 [Glossary](https://www.jenkins.io/doc/book/glossary/#glossary) 
