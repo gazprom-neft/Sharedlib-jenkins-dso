@@ -69,6 +69,71 @@
             }
         }
 
+- **createSecret**:
+
+    >##### **Create OCP secrets for registry**
+    *@param* **ocpCredId**\
+    *@param* **registryList** Comma seprated list\
+    *@param* **registryPort**\
+    *@param* **ocpNamespace**
+
+        stage("OCP create secret") {
+            steps {
+			doOc("createSecret", ["registryCredId": "$REGISTRY_CRED_ID",
+					      "registryList"  : "$REGISTRY_LIST",
+					      "registryPort"  : "$REGISTRY_PORT",
+					      "ocpNamespace"  : "$OCP_NAMESPACE"])
+            }
+        }
+
+- **tag**:
+
+    >##### **Tag image stream (gitCommitShort) as latest**
+    *@param* **registry**\
+    *@param* **ocpAppName**\
+    *@param* **ocpNamespace**\
+    *@param* **gitCommitShort**
+
+        stage("OCP tag image") {
+            steps {
+			doOc("tag", ["registry"      : "$REGISTRY",
+				     "ocpAppName"    : "$OCP_APP_NAME",
+				     "ocpNamespace"  : "$OCP_NAMESPACE",
+				     "gitCommitShort": "$GIT_COMMIT_SHORT"])
+            }
+        }
+	
+- **checkIS & status**:
+
+    >##### **Get status of image stream**
+    *@param* **ocpAppName**\
+    *@param* **ocpNamespace**
+
+        stage("OCP check image") {
+		when {
+		    not {
+			expression {
+			    doOc("checkIS", ["ocpAppName"  : "$OCP_APP_NAME",
+					     "ocpNamespace": "$OCP_NAMESPACE"])
+			}
+		    }
+		}
+		steps {
+		    doOc("status", ["ocpAppName": "$OCP_APP_NAME"])
+		}
+        }
+
+- **deployTemplate**:
+
+    >##### **Deploy or change templates from specific directory**
+    *@param* **ocpNamespace**
+
+        stage("OCP deploy template") {
+            steps {
+			doOc("deployTemplate", ["ocpNamespace": "$OCP_NAMESPACE"])
+            }
+        }
+	
 | Function                             | Parameters. Type: String                                                                                  | Description                                                                                                    | Jenkins step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | :----------------------------------: | :-------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **login**                            | *ocpCredId*<br/> *ocpUrlTarget*<br/> *ocpNamespace*                                                       | **Login to ocp cluster**                                                                                     | doOc("login", ["ocpCredId":&ensp;"$OCP_CRED_ID",<br/>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;"ocpUrlTarget":&ensp;"$OCP_URL_TARGET",<br/>&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;"ocpNamespace":&ensp;"$OCP_NAMESPACE"])                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
