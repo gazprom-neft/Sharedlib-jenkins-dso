@@ -219,7 +219,7 @@ class SastFunction {
                             // We don't care about passing credentials through docker container environment variables here (in more secure way) 
                             // because they will be exposed in Jenkins console log as docker '-e' parameters anyway
                             script.sh """
-                            python3 /app/app.py -u $script.USERNAME -p '$script.PASSWORD' -n $sast_project_name -d $sast_reports_output_dir
+                            python3 /app/app.py -u $script.USERNAME -p '$script.PASSWORD' -n $sast_project_name -d "$sast_reports_output_dir"
                             """
                         }
                 }

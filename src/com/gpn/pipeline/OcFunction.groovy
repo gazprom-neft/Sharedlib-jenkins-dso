@@ -133,7 +133,7 @@ class OcFunction {
     */
     public void ocTag(String registry, String ocpNamespace, String ocpAppName, String gitCommitShort) {
         script.sh """
-            oc tag $registry/$ocpNamespace/$ocpAppName:$gitCommitShort $ocpAppName:latest
+            oc tag $registry/$ocpNamespace/$ocpAppName:$gitCommitShort $ocpAppName:latest --reference-policy=local
         """
     }
     /**

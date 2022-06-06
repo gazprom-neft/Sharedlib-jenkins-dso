@@ -18,7 +18,7 @@ class DockerFunction {
             usernameVariable: 'USERNAME', 
             passwordVariable: 'PASSWORD')]) {
             script.sh """
-                docker login $registry -u $script.USERNAME -p $script.PASSWORD
+                docker login '$registry' -u '$script.USERNAME' -p '$script.PASSWORD'
             """
         }
     }
@@ -65,7 +65,7 @@ class DockerFunction {
             passwordVariable: 'PASSWORD')]) {
 
             script.sh """
-                docker login $registry -u $script.USERNAME -p $script.PASSWORD
+                docker login '$registry' -u '$script.USERNAME' -p '$script.PASSWORD'
                 docker build -t $registry/$ocpNamespace/$ocpAppName:$gitCommitShort -f $dockerfileName $additionalArgs .
                 docker push $registry/$ocpNamespace/$ocpAppName:$gitCommitShort
             """

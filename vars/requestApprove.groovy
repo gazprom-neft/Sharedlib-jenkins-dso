@@ -1,6 +1,7 @@
 #!groovy
 
 def call(String path, String email, List jobParameters) {
+    def approver
     script {
         emailext (
             subject: "$aprv_mail_subject",
@@ -8,10 +9,21 @@ def call(String path, String email, List jobParameters) {
             to: "$aprv_approvers_mail"
         )
 
-        def userInput = input(id: 'Approve1', message: "$aprv_input_message", submitter: "$aprv_approvers", parameters: [[$class: 'BooleanParameterDefinition', defaultValue: false, description: '', name: 'Please confirm you agree with this']])
+        def userInput = input(
+            id: 'Approve1', 
+            message: "$aprv_input_message", 
+            submitter: "$aprv_approvers", 
+            submitterParameter: "approver", 
+            parameters: [
+                [$class: 'BooleanParameterDefinition', defaultValue: false, description: '', name: 'Please confirm you agree with this']
+                ]
+            )
+
+        approver = "${userInput.approver}"
+
         echo 'userInput: ' + userInput
 
-            if(userInput == true) {
+            if(userInput['Please confirm you agree with this'] == true) {
                 def outSideJob = build job: path, parameters: jobParameters
                 emailext (
                     subject: "$aprv_mail_subject_success",
@@ -29,4 +41,5 @@ def call(String path, String email, List jobParameters) {
             }
         }
     }
+    return approver
 }
