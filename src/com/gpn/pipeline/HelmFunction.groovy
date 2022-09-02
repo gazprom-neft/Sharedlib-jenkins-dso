@@ -20,14 +20,47 @@ class HelmFunction {
         this.helmTag = helmTag
     }
 
+    void withDockerLoginRetry(int attempts, Closure body) {
+        String error = 'docker login failed'
+        Exception ex
+        for (int i = 0; i <= attempts; i++) {
+            try {
+                body()
+            } catch (Exception e) {
+                if (e.getMessage() == error) {
+                    // Set exit error
+                    ex = e
+                    // Check if we at last try
+                    if (i == attempts) {
+                        break
+                    }
+                    // Wait a litle with progression
+                    int wait_seconds = (i+1)*2
+                    script.echo("Warning: ${error}. Retrying ${i+1} time in ${wait_seconds} seconds... (Overall attempts: ${attempts})")
+                    sleep(wait_seconds)
+                    continue
+                }
+                // Throw any other error
+                throw e
+                return
+            }
+            return
+        }
+        script.echo("Error: can't login to docker reigistry after ${attempts} attempts.")
+        throw ex
+    }
+
     void install(String kubeconfig, String helmPath, String helmValues, String helmChart, String appName, String namespace, String helmCommands, Boolean fromRepo) {
         checkParams(appName, namespace, helmChart)
-        script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
-            script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
-                if (fromRepo) {
-                    helmRemoteInstall(helmChart, appName, namespace, helmCommands)
-                } else {
-                    helmLocalInstall(helmPath, helmValues, helmChart, appName, namespace, helmCommands)
+
+        withDockerLoginRetry(3) {
+            script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
+                script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
+                    if (fromRepo) {
+                        helmRemoteInstall(helmChart, appName, namespace, helmCommands)
+                    } else {
+                        helmLocalInstall(helmPath, helmValues, helmChart, appName, namespace, helmCommands)
+                    }
                 }
             }
         }
@@ -35,27 +68,36 @@ class HelmFunction {
 
     void publish(String kubeconfig, String helmPath, String helmValues, String helmChart, String appName, String namespace, String helmCommands) {
         checkParams(appName, namespace, helmChart)
-        script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
-            script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
-                helmPublish(helmGetChartYaml(helmPath, helmChart), helmPath, helmChart)
+
+        withDockerLoginRetry(3) {
+            script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
+                script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
+                    helmPublish(helmGetChartYaml(helmPath, helmChart), helmPath, helmChart)
+                }
             }
         }
     }
 
     void uninstall(String kubeconfig, String appName, String namespace, String helmCommands) {
         checkParams(appName, namespace, "void")
-        script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
-            script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
-                helmUninstall(appName, namespace, helmCommands)
+
+        withDockerLoginRetry(3) {
+            script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
+                script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
+                    helmUninstall(appName, namespace, helmCommands)
+                }
             }
         }
     }
 
     void rollback(String kubeconfig, String appName, String appRev, String namespace, String helmCommands) {
         checkParams(appName, namespace, "void")
-        script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
-            script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
-                helmRollback(appName, appRev, namespace, helmCommands)
+
+        withDockerLoginRetry(3) {
+            script.docker.withRegistry("https://${this.dockerRegistry}", "${this.dockerRegistryCredId}") {
+                script.docker.image("${this.helmImage}:${this.helmTag}").inside("-e KUBECONFIG=${script.env.WORKSPACE}/${kubeconfig}") {
+                    helmRollback(appName, appRev, namespace, helmCommands)
+                }
             }
         }
     }

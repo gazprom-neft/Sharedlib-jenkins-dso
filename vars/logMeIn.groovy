@@ -1,5 +1,6 @@
 // It's depricated and will be removed soon. Use doDocker and doOc functions
 import com.gpn.pipeline.LoginUtils
+import com.gpn.pipeline.ExtendDescription
 
 /**
 * Executes a login function based on place
@@ -8,6 +9,10 @@ import com.gpn.pipeline.LoginUtils
 */
 def call(String place, Map parameters = [:], Closure body=null) {
     LoginUtils logUtils = new LoginUtils(this)
+    ExtendDescription extDesc = new ExtendDescription(this)
+
+    extDesc.addString('DEPRECATEDFUNCTION', 'logMeIn')
+    println('DEPRECATEDFUNCTION: logMeIn')
 
     switch(place) {
         case "docker":

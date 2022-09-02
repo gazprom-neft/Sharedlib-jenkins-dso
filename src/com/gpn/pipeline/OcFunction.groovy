@@ -19,7 +19,7 @@ class OcFunction {
             variable: 'TOKEN'
         )]) {
             script.sh """
-                oc login $ocpUrlTarget --token $script.TOKEN --namespace $ocpNamespace
+                oc login $ocpUrlTarget --token '$script.TOKEN' --namespace $ocpNamespace
             """
         }
     }
@@ -40,7 +40,7 @@ class OcFunction {
             vaultSecrets: vaultSecret
         ]) {
             script.sh """
-                oc login $ocpUrlTarget --token $script.TOKEN --namespace $ocpNamespace
+                oc login $ocpUrlTarget --token '$script.TOKEN' --namespace $ocpNamespace
             """
         }
     }
@@ -50,8 +50,7 @@ class OcFunction {
         @param ocpNamespace OCP Namespace
     */
     public String ocGetGUID(String entity, String ocpNamespace) {
-        def namespace = ocpNamespace.toLowerCase()
-        def t = script.sh(script: "oc describe project $namespace | grep -Po '$entity=\\d+' | grep -Po '\\d+'", returnStdout: true)
+        def t = script.sh(script: "oc describe project $ocpNamespace | grep -Po '$entity=\\d+' | grep -Po '\\d+'", returnStdout: true)
         return t.trim()
     }
     /**
@@ -126,23 +125,23 @@ class OcFunction {
     }
     /**
         Tag new image as latest
-        @param registry URL of desired cluster
-        @param ocpNamespace OCP Namespace
-        @param ocpAppName name of deployed application
-        @param gitCommitShort short hash of commit
+        @param registry URL of desired docker-registry service
+        @param registry_path project_id any ocp_namespace
+        @param image_name name used for application
+        @param image_tag docker image tag
     */
-    public void ocTag(String registry, String ocpNamespace, String ocpAppName, String gitCommitShort) {
+    public void ocTag(String registry, String registry_path, String image_name, String image_tag) {
         script.sh """
-            oc tag $registry/$ocpNamespace/$ocpAppName:$gitCommitShort $ocpAppName:latest --reference-policy=local
+            oc tag '$registry/$registry_path/$image_name:$image_tag' $image_name:latest
         """
     }
     /**
         Get status of image stream
-        @param ocpAppName name of deployed application
+        @param image_name name used for application
         @param ocpNamespace OCP Namespace
     */
-    public String ocDescribeIS(String ocpAppName, String ocpNamespace) {
-        return script.sh(script: "oc describe is/$ocpAppName -n $ocpNamespace | grep NotFound", returnStatus: true)
+    public String ocDescribeIS(String image_name, String ocpNamespace) {
+        return script.sh(script: "oc describe is/$image_name -n $ocpNamespace | grep NotFound", returnStatus: true)
     }
     /**
         Show the status of deployment config rollout
@@ -185,7 +184,7 @@ class OcFunction {
     public void ocApplyApp(String ocpNamespace, String templateName, String templateParams) {
         script.sh """
             set +e
-            oc process -n $ocpNamespace $templateName $templateParams | oc apply -f -
+            oc process -n $ocpNamespace -f $templateName $templateParams | oc apply -f -
             set -e
         """
     }
@@ -198,7 +197,7 @@ class OcFunction {
     public void ocCreateApp(String ocpNamespace, String templateName, String templateParams) {
         script.sh """
             set +e
-            oc process -n $ocpNamespace $templateName $templateParams | oc create -f -
+            oc process -n $ocpNamespace -f $templateName $templateParams | oc create -f -
             set -e
         """
     }
@@ -235,5 +234,13 @@ class OcFunction {
             oc delete secret --selector $ocpLabel=$ocpAppName -n $ocpNamespace || :
             oc delete quota $quotaName -n $ocpNamespace || :
         """
-    }  
+    }
+    /**
+        Get pod images from namespace
+        @param ocpNamespace OCP Namespace
+    */
+    public void ocGetPodImage(String ocpNamespace) {
+        def pi = script.sh(script: """oc get po -o yaml -n $ocpNamespace | grep image: | cut -d ":" -f2,3,4 | sort | uniq""", returnStdout: true)
+        return pi.split('\n')
+    }
 }

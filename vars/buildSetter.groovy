@@ -12,13 +12,14 @@ def call(String branch=null, Map parameters = [:]) {
     def UPSTREAM_BUILD
     def UPSTREAM_BUILD_NUMBER
     def DEPLOY_ENVIRONMENT
-    def EXT_DESCRIPTION = "---------------"
+    def EXT_DESCRIPTION = ""
 
 //====== Set properties from project folders ======
     withFolderProperties{
         LANDSCAPE_ID = "${env.LANDSCAPE_ID}"
         OCP_URL_TARGET = "${env.OCP_URL_TARGET}"
         DEPLOY_ENVIRONMENT = "${env.DEPLOY_ENVIRONMENT}"
+        DSO_TYPE = "${env.DSO_TYPE}"
     }
 
 //====== Check & set parameters for main description block ======
@@ -66,9 +67,15 @@ def call(String branch=null, Map parameters = [:]) {
     }
 
     if (UPSTREAM_BUILD_DESCRIPTION) {
-        UPSTREAM_BUILD = (UPSTREAM_BUILD_DESCRIPTION =~ /"(.+)"/)[0][1]
-        def buildNumber = (UPSTREAM_BUILD_DESCRIPTION =~ /build\snumber\s([0-9,]+)$/)[0][1]
-        UPSTREAM_BUILD_NUMBER = buildNumber.split(",").join('')
+        def ub = UPSTREAM_BUILD_DESCRIPTION =~ /"(.+)"/
+        if (ub) {
+            UPSTREAM_BUILD = ub[0][1]
+        }
+
+        def bn = UPSTREAM_BUILD_DESCRIPTION =~ /build\snumber\s([0-9,]+)$/
+        if (bn) {
+            UPSTREAM_BUILD_NUMBER = bn[0][1].split(',').join('')
+        }
     } else {
         UPSTREAM_BUILD = ""
         UPSTREAM_BUILD_NUMBER = ""
@@ -95,6 +102,11 @@ def call(String branch=null, Map parameters = [:]) {
         !!!APPROVER = $parameters.approver_name !!!"""
     }
 
+    if (DSO_TYPE != 'null') {
+        EXT_DESCRIPTION = """$EXT_DESCRIPTION
+        !!!DSO_TYPE = $DSO_TYPE !!!"""
+    }
+
 //====== Set custom build name ======
     if (parameters.customBuildName) {
         buildName "$BUILD_NUMBER-$parameters.customBuildName"
@@ -106,9 +118,10 @@ def call(String branch=null, Map parameters = [:]) {
 
 //====== Set description. Main block + extended block (if exist) ======
     wrap([$class: 'BuildUser']){
-        USER_EMAIL = env.BUILD_USER_EMAIL
-        USER_ID = env.BUILD_USER_ID ?: "Jenkins"
-        buildDescription """Executed @ ${NODE_NAME}. Build started by ${USER_ID}
+    USER_EMAIL = env.BUILD_USER_EMAIL
+    USER_ID = env.BUILD_USER_ID ?: "Jenkins"
+    buildDescription """\
+        Executed @ ${NODE_NAME}. Build started by ${USER_ID}
         !!!LANDSCAPE_ID = $LANDSCAPE_ID !!!
         !!!BUILD_NUMBER = $BUILD_NUMBER !!!
         !!!GIT_URL = $GIT_URL !!!
@@ -123,6 +136,6 @@ def call(String branch=null, Map parameters = [:]) {
         !!!UPSTREAM_BUILD = $UPSTREAM_BUILD !!!
         !!!UPSTREAM_BUILD_NUMBER = $UPSTREAM_BUILD_NUMBER !!!
         $EXT_DESCRIPTION
-        """
+        """.stripIndent()
     }
 }

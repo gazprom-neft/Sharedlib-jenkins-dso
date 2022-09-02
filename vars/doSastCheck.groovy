@@ -1,5 +1,13 @@
 import groovy.transform.Field
 import com.gpn.pipeline.SastFunction
+import com.gpn.pipeline.CheckmarxSast
+import com.gpn.pipeline.PtaiSast
+
+// Interface for SAST related child classes
+interface Saster {
+    void doSastScan()
+    void genSastReport()
+}
 
 // Defaults
 @Field dont_scan_string = "DON'T SCAN" // default string for the first element (branch/tag) of each repo
@@ -22,7 +30,7 @@ import com.gpn.pipeline.SastFunction
 @Field sast_preset = "100009" // Checkmarx Default - GAZPROM-DEFAULT01
 @Field sast_project_policy_enforce = false // Enforce SAST policy to return error in jenkins build (Default "false")
 @Field sast_server_cred_id = "${env.SL_SAST_SERVER_CRED_ID}" // SAST credential id with username/password to access REST API (get token)
-@Field sast_filter_pattern = '''!**/_cvs/**/*, !**/.svn/**/*, !**/.hg/**/*, !**/.git/**/*, !**/.bzr/**/*,
+@Field sast_filter_pattern = '''!**/.ptai/**, !**/_cvs/**/*, !**/.svn/**/*, !**/.hg/**/*, !**/.git/**/*, !**/.bzr/**/*,
         !**/.gitgnore/**/*, !**/.gradle/**/*, !**/.checkstyle/**/*, !**/.classpath/**/*, !**/bin/**/*,
         !**/obj/**/*, !**/backup/**/*, !**/.idea/**/*, !**/*.DS_Store, !**/*.ipr, !**/*.iws,
         !**/*.bak, !**/*.tmp, !**/*.aac, !**/*.aif, !**/*.iff, !**/*.m3u, !**/*.mid, !**/*.mp3,
@@ -41,17 +49,11 @@ import com.gpn.pipeline.SastFunction
 @Field sast_high_threshold = 0
 @Field sast_medium_threshold = 0
 @Field sast_low_threshold = 0
-
-// *** Moved to parameters [:] default in main "call" function ***
-//@Field is_debug = true // Turn on additional debugging info
-//@Field sast_hide_debug = true // Reduce SAST log generations is jenkins console output (Default "true") 
-//@Field sast_cac = false // Enables SAST configuration as code (Default "false") 
-//@Field sast_incremental = false // Enables SAST incremental scans (Default "false")
-//@Field git_project_name = "TEST_PROJECT" // Project ID for search across ADS collections (use \$ at the end of string to allow precise searching. Example: "TEST_PROJECT\$")
-// ***************************************************************
+@Field sast_type = "ptai" // sast type default value to PTAI ('ptai' or 'checkmarx')
+@Field sast_lang = "python" // sast default lang type
 
 def call(String func, Map parameters = [:]) {
-    SastFunction sastFunc = new SastFunction(this)
+    SastFunction sastFunc = new SastFunction(script: this)
 
     // Defaults for parameters [:]
     // These may be overridden by user from the shared library function call
@@ -65,7 +67,7 @@ def call(String func, Map parameters = [:]) {
         parameters.sast_cac = false // Define default to false if not exists
     }
     if(parameters.sast_incremental == null) {
-        parameters.sast_incremental = false // Define default to false if not exists
+        parameters.sast_incremental = true // Define default to true if not exists
     }
     if(parameters.set_build_name == null) {
         parameters.set_build_name = false // Define default to false if not exists
@@ -93,7 +95,13 @@ def call(String func, Map parameters = [:]) {
     }   
     if(parameters.sast_low_threshold != null) {
         sast_low_threshold = parameters.sast_low_threshold
-    }   
+    }
+    if(parameters.sast_type != null) {
+        sast_type = parameters.sast_type
+    }
+    if(parameters.sast_lang != null) {
+        sast_lang = parameters.sast_lang
+    }    
 
     switch(func) {
         /*
@@ -126,50 +134,29 @@ def call(String func, Map parameters = [:]) {
                                                                 TOKEN, 
                                                                 parameters.is_debug)
                 }
+
+                // Setup repos for scan
+                sastFunc.scan_map = parameters.repos_for_scan
                 
-                sastFunc.gitCheckoutRepos(parameters.repos_for_scan,
-                                                            dont_scan_string, 
-                                                            git_cred_id, 
-                                                            git_project_id, 
-                                                            git_ssh_proto, 
-                                                            git_ssh_port, 
-                                                            git_base_url, 
-                                                            git_collection_path, 
-                                                            git_repo_url_prefix, 
-                                                            GIT_USER,
-                                                            func,
-                                                            parameters.set_build_name)
+                sastFunc.gitCheckoutRepos(
+                    dont_scan_string, 
+                    git_cred_id, 
+                    git_project_id, 
+                    git_ssh_proto, 
+                    git_ssh_port, 
+                    git_base_url, 
+                    git_collection_path, 
+                    git_repo_url_prefix, 
+                    GIT_USER,
+                    func,
+                    parameters.set_build_name
+                )
             }
 
             if(parameters.sast_project_name == null) {
                 parameters.sast_project_name = git_project_full_name // Set SAST project name based on git_project_id (following DSOPROJECT-2150)
             }
 
-            withCredentials([string(credentialsId: git_api_cred_id, variable: 'SAST_PASSWORD')]) {
-                sastFunc.doSastScan(parameters.sast_project_name, sast_proto,
-                                                                sast_base_url, 
-                                                                sast_port, 
-                                                                sast_generate_pdf_report, 
-                                                                SAST_PASSWORD,
-                                                                sast_preset,
-                                                                sast_filter_pattern,
-                                                                sast_project_policy_enforce,
-                                                                parameters.sast_hide_debug,
-                                                                parameters.sast_cac,
-                                                                parameters.sast_incremental,
-                                                                parameters.sast_group_id,
-                                                                sast_vulnerability_threshold_enabled,
-                                                                sast_high_threshold,
-                                                                sast_medium_threshold,
-                                                                sast_low_threshold)
-            }
-
-            // Generate sast reports for target scan
-            if (parameters.sast_generate_reports) {
-                sastFunc.genSastReport(sast_server_cred_id, parameters.sast_project_name, parameters.sast_generate_reports_email_list)
-            }
-            
-            cleanWs() // Clean project space from sast check artifacts
             break
         case "interactive":
             /*
@@ -237,49 +224,90 @@ def call(String func, Map parameters = [:]) {
                     println(userInput);
                 }
 
+                // Setup repos for scan
+                sastFunc.scan_map = userInput
+
                 // Cheout selected repos/branches/tags
-                sastFunc.gitCheckoutRepos(userInput, dont_scan_string, 
-                                                            git_cred_id, 
-                                                            git_project_id, 
-                                                            git_ssh_proto, 
-                                                            git_ssh_port, 
-                                                            git_base_url, 
-                                                            git_collection_path, 
-                                                            git_repo_url_prefix, 
-                                                            GIT_USER,
-                                                            func,
-                                                            parameters.set_build_name)
+                sastFunc.gitCheckoutRepos(
+                    dont_scan_string, 
+                    git_cred_id, 
+                    git_project_id, 
+                    git_ssh_proto, 
+                    git_ssh_port, 
+                    git_base_url, 
+                    git_collection_path, 
+                    git_repo_url_prefix, 
+                    GIT_USER,
+                    func,
+                    parameters.set_build_name
+                )
             }
             
             if(parameters.sast_project_name == null) {
                 parameters.sast_project_name = git_project_full_name // Set SAST project name based on git_project_id (following DSOPROJECT-2150)
             }
 
+            break
+    }
+
+    switch (sast_type) {
+        case "ptai":
+            Saster ptai = new PtaiSast(
+                script: this,
+                is_debug: parameters.is_debug,
+                sast_project_name: parameters.sast_project_name,
+                sast_report_email_list: parameters.sast_generate_reports_email_list,
+                sast_hide_debug: parameters.sast_hide_debug,
+                sast_filter_pattern: sast_filter_pattern,
+                sast_incremental: parameters.sast_incremental,
+                sast_lang: sast_lang,
+                sast_vulnerability_threshold_enabled: sast_vulnerability_threshold_enabled,
+                scan_map: sastFunc.scan_map,
+            )
+            // Run sast check
+            ptai.doSastScan()
+
+            // Generate sast reports for target scan
+            if (parameters.sast_generate_reports) {
+                ptai.genSastReport()
+            }
+
+            break
+        case "checkmarx":
+            Saster checkmarx
             withCredentials([string(credentialsId: git_api_cred_id, variable: 'SAST_PASSWORD')]) {
-                sastFunc.doSastScan(parameters.sast_project_name, sast_proto, 
-                                                                sast_base_url, 
-                                                                sast_port, 
-                                                                sast_generate_pdf_report, 
-                                                                SAST_PASSWORD,
-                                                                sast_preset,
-                                                                sast_filter_pattern,
-                                                                sast_project_policy_enforce,
-                                                                parameters.sast_hide_debug,
-                                                                parameters.sast_cac,
-                                                                parameters.sast_incremental,
-                                                                parameters.sast_group_id,
-                                                                sast_vulnerability_threshold_enabled,
-                                                                sast_high_threshold,
-                                                                sast_medium_threshold,
-                                                                sast_low_threshold)
+                checkmarx = new CheckmarxSast(
+                    script: this,
+                    sast_project_name: parameters.sast_project_name,
+                    sast_proto: sast_proto,
+                    sast_base_url: sast_base_url,
+                    sast_port: sast_port, 
+                    sast_generate_pdf_report: sast_generate_pdf_report,
+                    sast_password: SAST_PASSWORD,
+                    sast_preset: sast_preset,
+                    sast_filter_pattern: sast_filter_pattern,
+                    sast_project_policy_enforce: sast_project_policy_enforce,
+                    sast_hide_debug: parameters.sast_hide_debug,
+                    sast_cac: parameters.sast_cac,
+                    sast_incremental: parameters.sast_incremental,
+                    sast_group_id: parameters.sast_group_id,
+                    sast_vulnerability_threshold_enabled: sast_vulnerability_threshold_enabled,
+                    sast_high_threshold: sast_high_threshold,
+                    sast_medium_threshold: sast_medium_threshold,
+                    sast_low_threshold: sast_low_threshold,
+                    sast_srv_cred_id: sast_server_cred_id,
+                    sast_report_email_list: parameters.sast_generate_reports_email_list,
+                    scan_map: sastFunc.scan_map,
+                )
+                checkmarx.doSastScan()
             }
 
             // Generate sast reports for target scan
             if (parameters.sast_generate_reports) {
-                sastFunc.genSastReport(sast_server_cred_id, parameters.sast_project_name, parameters.sast_generate_reports_email_list)
+                checkmarx.genSastReport()
             }
 
-            cleanWs() // Clean project space from sast check artifacts
             break
     }
+    cleanWs() // Clean project space from sast check artifacts
 }

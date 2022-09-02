@@ -1,4 +1,6 @@
 import com.gpn.pipeline.HelmFunction
+import com.gpn.pipeline.OcFunction
+import com.gpn.pipeline.ExtendDescription
 
 def call(String func, Map parameters = [:]) {
     def helmPath = parameters.helm_path ?: "/ci/helm/"
@@ -20,19 +22,27 @@ def call(String func, Map parameters = [:]) {
     }
     withFolderProperties {(dockerRegistry, dockerRegistryCredId) = getRegistry(env.DEPLOY_ENVIRONMENT)} 
     HelmFunction helm = new HelmFunction(this, dockerRegistry, dockerRegistryCredId, helmImage, helmTag, helmRegistry, helmRegistryCredId)
+    OcFunction ocFunc = new OcFunction(this)
+    ExtendDescription extDesc = new ExtendDescription(this)
 
     switch(func) {
         case "install":
             helm.install(kubeconfig, helmPath, helmValues, helmChart, appName, namespace, helmCommands, fromRepo)
+            def podImages = ocFunc.ocGetPodImage(namespace)
+            podImages.each {val -> extDesc.addString('IMAGE', val)}
             break
         case "publish":
             helm.publish(kubeconfig, helmPath, helmValues, helmChart, appName, namespace, helmCommands)
             break
         case "rollback":
             helm.rollback(kubeconfig, appName, appRev, namespace, helmCommands)
+            def podImages = ocFunc.ocGetPodImage(namespace)
+            podImages.each {val -> extDesc.addString('IMAGE', val)}
             break
         case "uninstall":
             helm.uninstall(kubeconfig, appName, namespace, helmCommands)
+            def podImages = ocFunc.ocGetPodImage(namespace)
+            podImages.each {val -> extDesc.addString('IMAGE', val)}
             break
         default:
             helm.abortBuild("Error: unknown 'doHelm' function - '${func}'.")
